@@ -1,4 +1,4 @@
-from random import random
+import random
 
 from pymilvus import (
     connections,
@@ -47,15 +47,17 @@ def create_collection(collection_name):
 def insert(collection, num, dim):
     data = [
         [i for i in range(num)],
+        [float(i) for i in range(num)],
         [[random.random() for _ in range(dim)] for _ in range(num)],
     ]
     collection.insert(data)
-    return data[1]
+    return data[2]
 
 
 def drop_index(collection):
     collection.drop_index()
     print("\nDrop index sucessfully")
+
 
 def search(collection, vector_field, id_field, search_vectors):
     search_param = {
@@ -63,7 +65,7 @@ def search(collection, vector_field, id_field, search_vectors):
         "anns_field": vector_field,
         "param": {"metric_type": _METRIC_TYPE, "params": {"nprobe": _NPROBE}},
         "limit": _TOPK,
-        "expr": "id_field >= 0"}
+        "expr": "id >= 0"}
     results = collection.search(**search_param)
     for i, result in enumerate(results):
         print("\nSearch result for {}th vector: ".format(i))
@@ -104,7 +106,8 @@ if __name__ == '__main__':
     col1_db1 = create_collection("col1_db1")
 
     # create db1
-    db.create_database(db_name="db1")
+    if "db1" not in db.list_database():
+        db.create_database(db_name="db1")
 
     # use database db1
     db.using_database(db_name="db1")
@@ -123,9 +126,6 @@ if __name__ == '__main__':
     col2_db1.drop()
     col2_db2.drop()
 
-    print("\ndrop database db1:")
-    db.drop_database(db_name="db4", using="con2")
-
     # list database
     print("\nlist databases:")
-    print(db.list_database(using="con2"))
+    print(db.list_database())
